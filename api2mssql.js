@@ -1,6 +1,6 @@
 // Charder Height/Weight/BMI(hwBMI) machine API 
 
-var version = "Charder 身高體重機 API V0.2a"; // 配合北榮案直連 SQL 資料庫
+var version = "Charder 身高體重機 API V0.2b"; // 配合北榮案直連 SQL 資料庫
 var charderAPIKEY = "xG0y3ziAPN";
 
 var customerName = process.env.NAME || "北榮新竹分院";
@@ -16,34 +16,18 @@ var app = express();
 var port = process.env.PORT || 80; //給 身高體重計 呼叫
 // express 宣告結束 ======================
 
-const { exec } = require("child_process");
-
-//https 需求，因為改為直接呼叫 IP address，應該不需要了
-// var options = {
-//   //key: fs.readFileSync('./ssl/privatekey.pem'),
-//   //cert: fs.readFileSync('./ssl/certificate.pem'),
-//   key: fs.readFileSync('/etc/letsencrypt/live/makerkang.com/privkey.pem'),
-//   cert: fs.readFileSync('/etc/letsencrypt/live/makerkang.com/fullchain.pem'),
-// };
-
-
-// 金機((goldenfound) Firebase 宣告 =========================
-// 北榮案不傳雲端，所以 firebase 也不需要
-// var admin = require("firebase-admin");
-// var goldebFoundAccount = require("./goldenfound-7ecb8-firebase-adminsdk-uuev4-2ec52d0607.json");
-
-// var app_golden = admin.initializeApp({
-//   credential: admin.credential.cert(goldebFoundAccount),
-//   databaseURL: "https://goldenfound-7ecb8-default-rtdb.firebaseio.com/"
-// }, "app_golden");
-
-// var golden_found_DB = admin.database(app_golden); 
-
-// var database;
-
-// var 量測記錄筆數=0;
-
-// Firebase 宣告結束 ======================
+// const { exec } = require("child_process");
+const sql = require('mssql');
+const config = {
+  user: 'SA',
+  password: '<abc@12345678>',
+  server: 'localhost',
+  database: 'VitalSign',
+  options: {
+    encrypt: true,
+    trustServerCertificate: true,
+  },
+};
 
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
@@ -105,27 +89,26 @@ app.listen(port, function () {
   console.log('App listening on port: ', port);
 });
 
-// var server = https.createServer(options, app).listen(port, function(){
-//   console.log("Express server listening on port " + port);
-// });
 
-// express 設定結束 ======================================
-
-// Program starts here
-var sleep = require('system-sleep')
+//var sleep = require('system-sleep')
 console.log("Version:", version);
 
 var inputParam;
 
-//test
-//insert_rec_to_sql("12345678", "abcde", "2023-03-21 18:57:30", "02", "80", "kg");
-
-function chack_data(record) {
+function check_data(record) {
   console.log("id", typeof record.id);
   console.log("nid", typeof record.nid);
   console.log("net_weight", typeof record.net_weight);
   console.log("height", typeof record.height);
   console.log("measure_time", typeof record.measure_time);
+
+  // id: 北榮新竹分院一般是 8 碼，但在護家(7,8,9,10,11 村)會用 10碼身分證號
+  // 先不轉換，使用 8碼
+
+  // 轉換 nid: 若 12 碼則轉成 ５碼
+  if (record.nid.length == 12) {
+    record.nid = record.nid.substr(1, 5); // NN0457000002 => N0457
+  }
 
   if (record.id.length != 8) return "id 長度錯誤";
   if (record.nid.length != 5) return "nid 長度錯誤";
@@ -191,8 +174,15 @@ async function postData(req, response) {
       console.log(record);
       var measure_time = new Date(measurements.packet[i].time);
 
-      if (chack_data(record) != "OK") {
-        console.log(chack_data(record));
+      if (check_data(record) != "OK") {
+        console.log(check_data(record));
+        var errResponse = { // Error=8 means data error
+          "Timestamp": Date.now(),
+          "Error": 8
+        }
+        response.send(JSON.stringify(errResponse));
+        return;
+
       } else {
         console.log("Data is OK");
 
@@ -201,6 +191,7 @@ async function postData(req, response) {
           var takeType = "01";
           var dataUnit = "cm";
           // Inject to SQL
+          console.log(record.id, record.nid, record.measure_time, takeType, height_str, dataUnit);
           insert_rec_to_sql(record.id, record.nid, record.measure_time, takeType, height_str, dataUnit);
         }
 
@@ -209,6 +200,7 @@ async function postData(req, response) {
           var takeType = "02";
           var dataUnit = "kg";
           // Inject to SQL
+          console.log(record.id, record.nid, record.measure_time, takeType, weight_str, dataUnit);
           insert_rec_to_sql(record.id, record.nid, record.measure_time, takeType, weight_str, dataUnit);
         }
       }
@@ -218,7 +210,7 @@ async function postData(req, response) {
 
   } catch (e) {
     console.log(e)
-    var errResponse = { // Error=0 means no error
+    var errResponse = {
       "Timestamp": Date.now(),
       "Error": 7
     }
@@ -235,8 +227,8 @@ async function postData(req, response) {
 
 
 
-function insert_rec_to_sql(medId, userId, takeTime, takeType, takeValue, dataUnit) {
-  var memo = "memo";
+async function insert_rec_to_sql(medId, userId, takeTime, takeType, takeValue, dataUnit) {
+  var memo = "NULL";
   // var medId = "12345678";
   // var userId = "abcde";
   // var takeTime = "2023-03-21 16:57:30";
@@ -246,29 +238,40 @@ function insert_rec_to_sql(medId, userId, takeTime, takeType, takeValue, dataUni
   // var dataUnit = "kg"; //"cm";
 
   // var sql_cmd = "SELECT * FROM VitalSignM;";
-  var sql_cmd = 'insert into VitalSignM values ("12345678", "abcde", "2023-03-18 16:57:30", "01", "175", "memo", "cm", "Y", "N", "");';
-  var insert_rec = 'insert into VitalSignM values ("'
-    + medId + '", "'
-    + userId + '", "'
-    + takeTime + '", "'
-    + takeType + '", "'
-    + takeValue + '", "'
-    + memo + '", "'
-    + dataUnit + '",  "Y", "N", "");';
+  // var sql_cmd = 'insert into VitalSignM values ("12345678", "abcde", "2023-03-18 16:57:30", "01", "175", "memo", "cm", "Y", "N", "");';
+  // var insert_rec = 'insert into VitalSignM values ("'
+  //   + medId + '", "'
+  //   + userId + '", "'
+  //   + takeTime + '", "'
+  //   + takeType + '", "'
+  //   + takeValue + '", "'
+  //   + memo + '", "'
+  //   + dataUnit + '",  "Y", "N", " ");';
 
-  console.log(insert_rec);
+  // console.log(insert_rec);
 
-  exec("sqlcmd -S localhost -U sa -P '<abc@12345678>' -Q 'USE VitalSign; " + insert_rec + "'", (error, stdout, stderr) => {
-    if (error) {
-      console.log(`error: ${error.message}`);
-      return;
-    }
-    if (stderr) {
-      console.log(`stderr: ${stderr}`);
-      return;
-    }
-    console.log(`stdout: ${stdout}`);
-  });
+  // exec("sqlcmd -S localhost -U sa -P '<abc@12345678>' -Q 'USE VitalSign; " + insert_rec + "'", (error, stdout, stderr) => {
+  //   if (error) {
+  //     console.log(`error: ${error.message}`);
+  //     return;
+  //   }
+  //   if (stderr) {
+  //     console.log(`stderr: ${stderr}`);
+  //     return;
+  //   }
+  //   console.log(`stdout: ${stdout}`);
+  // });
+
+  try {
+    await sql.connect(config);
+    const sql_command = `INSERT INTO VitalSignM (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
+    console.log(sql_command);
+    const result = await sql.query(sql_command);
+    console.log("sql result", result);
+  } catch (err) {
+    console.error(err);
+  }
+
 }
 
 // API:00
