@@ -1,5 +1,10 @@
 .DS_Store
 
+# binaries
+*-linux
+*-win.exe
+*-macos
+
 # Logs
 logs
 *.log
