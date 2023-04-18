@@ -18,11 +18,11 @@ var port = process.env.PORT || 80; //給 身高體重計 呼叫
 
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
-    // below are from https://ithelp.ithome.com.tw/articles/10273734
-    res.header('Content-Security-Policy', 'default-src larry.com');
-    res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    res.header('X-Content-Type-Options', 'nosniff');
-    res.header('X-Frame-Options', 'deny');
+  // below are from https://ithelp.ithome.com.tw/articles/10273734
+  res.header('Content-Security-Policy', 'default-src larry.com');
+  res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  res.header('X-Content-Type-Options', 'nosniff');
+  res.header('X-Frame-Options', 'deny');
 
   if (req.method === 'OPTIONS') {
     var headers = {};
@@ -91,7 +91,7 @@ function chack_data(record) {
   console.log("id", typeof record.id);
   console.log("nid", typeof record.nid);
   console.log("net_weight", typeof record.net_weight);
-  console.log("height", typeof record.height);
+  console.log("height", typeof record.height, record.height, record.height.length);
   console.log("measure_time", typeof record.measure_time);
 
   if (record.id.length != 8) return "id 長度錯誤";

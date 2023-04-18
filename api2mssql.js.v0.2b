@@ -3,11 +3,6 @@
 // Author: Paul Kang
 // Email: paul.kang@ucaremedi.com, paul@paul-kang.com
 
-var version = "Charder 身高體重機 API V0.3";
-var customerName = process.env.NAME || "北榮新竹分院";
-var charderAPIKEY = "xG0y3ziAPN";
-console.log("\n客戶名稱：", customerName, "，", version);
-
 var fs = require('fs');             // for log files
 
 const args = require('yargs').argv; // for command line arguments
@@ -29,6 +24,12 @@ if ((args.s == undefined || args.d == undefined || args.u == undefined || args.p
 }
 
 var inputParam; // API 參數
+
+var customerName = process.env.NAME || "北榮新竹分院";
+var version = "Charder 身高體重機 API V0.2b";
+var charderAPIKEY = "xG0y3ziAPN";
+
+console.log("\n客戶名稱：", customerName, "，", version);
 
 // SQL database settings
 var sql_username = args.u || 'SA';
@@ -91,7 +92,7 @@ app.get('/', async function (req, res) {
 
   // 若無 API 參數，無效退出
   if (typeof inputParam.API == "undefined") {
-    //console.log(req.headers);
+    console.log(req.headers);
 
     console.log("Error: No API");
     response.send("No API. 北榮新竹分院 API");
@@ -137,33 +138,33 @@ function keepAlive() {
 }
 // API:00 結束
 
-// // 檢查上傳資料正確性
-// function check_data(record) {
-//   console.log("id", typeof record.id);
-//   console.log("nid", typeof record.nid);
-//   console.log("net_weight", typeof record.net_weight);
-//   console.log("height", typeof record.height);
-//   console.log("measure_time", typeof record.measure_time);
+// 檢查上傳資料正確性
+function check_data(record) {
+  console.log("id", typeof record.id);
+  console.log("nid", typeof record.nid);
+  console.log("net_weight", typeof record.net_weight);
+  console.log("height", typeof record.height);
+  console.log("measure_time", typeof record.measure_time);
 
-//   var errCode = 0;
-//   // id 對應北榮新竹分院的 MedNo，一般是 8 碼，但在護家(7,8,9,10,11 村)會用 10碼身分證號，先不轉換，使用 8碼
-//   if (record.id.length != 8) errCode += 1; //hex 01 "id 長度錯誤";   
+  var errCode = 0;
+  // id 對應北榮新竹分院的 MedNo，一般是 8 碼，但在護家(7,8,9,10,11 村)會用 10碼身分證號，先不轉換，使用 8碼
+  if (record.id.length != 8) errCode += 1; //hex 01 "id 長度錯誤";   
 
-//   // nid 對應北榮新竹分院的 UserNo，一般是 5 碼，若 12 碼 NN0457000002 則轉成 ５碼 N0457
-//   if (record.nid.length == 12) {
-//     record.nid = record.nid.substr(1, 5); // NN0457000002 => N0457
-//   }
-//   if (record.nid.length != 5) errCode += 2; //hex 10 "nid 長度錯誤";
+  // nid 對應北榮新竹分院的 UserNo，一般是 5 碼，若 12 碼 NN0457000002 則轉成 ５碼 N0457
+  if (record.nid.length == 12) {
+    record.nid = record.nid.substr(1, 5); // NN0457000002 => N0457
+  }
+  if (record.nid.length != 5) errCode += 2; //hex 10 "nid 長度錯誤";
 
-//   //if (record.net_weight.length < 3) return "net_weight 長度錯誤";
-//   //if (record.height.length < 3) return "height 長度錯誤";
-//   //if (record.measure_time.length == 0) return "measure_time 長度錯誤";
+  //if (record.net_weight.length < 3) return "net_weight 長度錯誤";
+  //if (record.height.length < 3) return "height 長度錯誤";
+  //if (record.measure_time.length == 0) return "measure_time 長度錯誤";
 
-//   if (errCode == 0)
-//     return "OK";
-//   else
-//     return errCode;
-// }
+  if (errCode == 0)
+    return "OK";
+  else
+    return errCode;
+}
 // 檢查上傳資料正確性 結束
 
 // 處理上傳資料
@@ -182,9 +183,19 @@ async function postData(req, response) {
     return 1;
   }
 
+  // if (req.data == undefined) {
+  //   console.log("POST data is undefined, Error:7");
+  //   var errResponse = {
+  //     "Timestamp": Date.now(),
+  //     "Error": 7
+  //   }
+  //   response.send(JSON.stringify(errResponse));
+  //   return 1;
+  // }
+
   try {
     var measurements = JSON.parse(req.data)
-    //console.log(measurements);
+    console.log(measurements);
 
     var record;
     for (var i = 0; i < measurements.total; i++) {
@@ -201,61 +212,55 @@ async function postData(req, response) {
         "measure_time": measurements.packet[i].time,
         "upload_time": Date.now()
       };
-      //console.log(record);
+      console.log(record);
+      var measure_time = new Date(measurements.packet[i].time);
 
-      var errCode = 0;
-      // id 對應北榮新竹分院的 MedNo，一般是 8 碼，但在護家(7,8,9,10,11 村)會用 10碼身分證號，先不轉換，使用 8碼
-      if (record.id.length != 8) errCode += 1; //hex 01 "id 長度錯誤";   
+      if (check_data(record) != "OK") {
+        console.log("Data has errors");
 
-      // nid 對應北榮新竹分院的 UserNo，一般是 5 碼，若 12 碼 NN0457000002 則轉成 ５碼 N0457
-      if (record.nid.length == 12) {
-        record.nid = record.nid.substr(1, 5); // NN0457000002 => N0457
-      }
-      if (record.nid.length != 5) errCode += 2; //hex 10 "nid 長度錯誤";
+        // var errResponse = { // Error=8 means data error
+        //   "Timestamp": Date.now(),
+        //   "Error": 8
+        // }
+        // response.send(JSON.stringify(errResponse));
+        // return;
 
-      if (record.height != '0') {
-        if ((errCode & 1) == 1) {
-          log_event("[E] " + new Date() + ": MedNo 長度錯誤，必須為 8 位");
-          log_event("    Record: " + record.id + " " + record.nid + " " + record.measure_time + " " + record.height);
-        } else if ((errCode & 2) == 2) {
-          log_event("[E] " + new Date() + ": UserNo 長度錯誤，必須為 5 或 12 位");
-          log_event("    Record: " + record.id + " " + record.nid + " " + record.measure_time + " " + record.height);
-        } else {
+      } else {
+        console.log("Data is OK");
+
+        if (record.height != '0') {
           var height_str = record.height.substr(0, record.height.length - 2);
+          console.log(height_str, typeof height_str);
           if (height_str != "0") {
             var takeType = "01";
             var dataUnit = "cm";
             // Inject to SQL
-            //console.log(record.id, record.nid, record.measure_time, takeType, height_str, dataUnit);
+            console.log(record.id, record.nid, record.measure_time, takeType, height_str, dataUnit);
             insert_rec_to_sql(record.id, record.nid, record.measure_time, takeType, height_str, dataUnit);
           }
         }
-      }
 
-      if (record.net_weight != '0') {
-        if ((errCode & 1) == 1) {
-          log_event("[E] " + new Date() + ": MedNo 長度錯誤，必須為 8 位");
-          log_event("    Record: " + record.id + " " + record.nid + " " + record.measure_time + " " + record.net_weight);
-        } else if ((errCode & 2) == 2) {
-          log_event("[E] " + new Date() + ": UserNo 長度錯誤，必須為 5 或 12 位");
-          log_event("    Record: " + record.id + " " + record.nid + " " + record.measure_time + " " + record.net_weight);
-        } else {
+        if (record.net_weight != '0') {
           var weight_str = record.net_weight.substr(0, record.net_weight.length - 2);
           if (weight_str != "0") {
             var takeType = "02";
             var dataUnit = "kg";
             // Inject to SQL
-            //console.log(record.id, record.nid, record.measure_time, takeType, weight_str, dataUnit);
+            console.log(record.id, record.nid, record.measure_time, takeType, weight_str, dataUnit);
             insert_rec_to_sql(record.id, record.nid, record.measure_time, takeType, weight_str, dataUnit);
           }
         }
       }
-
     }
 
-  } catch (err) {
-    console.log(err)
-    log_event("[E] " + new Date() + ": Error: " + err.message);
+  } catch (e) {
+    console.log(e)
+    // var errResponse = {
+    //   "Timestamp": Date.now(),
+    //   "Error": 7
+    // }
+    // response.send(JSON.stringify(errResponse));
+    // return;
   }
 
   var errResponse = { // Error=0 means no error
@@ -270,15 +275,11 @@ async function insert_rec_to_sql(medId, userId, takeTime, takeType, takeValue, d
   try {
     await sql.connect(config);
     const sql_command = `INSERT INTO VitalSignM (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
-    //console.log(sql_command);
+    console.log(sql_command);
     const result = await sql.query(sql_command);
-    //console.log("sql result", result);
-
-    log_event("[I] " + new Date() + ": Write record into the database OK");
-    log_event("    Record: " + medId + " " + userId + " " + takeTime + " " + takeType + " " + takeValue + " " + dataUnit);
+    console.log("sql result", result);
   } catch (err) {
-    console.log(err)
-    log_event("[E] " + new Date() + ": Error: " + err.message);
+    console.error(err);
   }
 }
 
