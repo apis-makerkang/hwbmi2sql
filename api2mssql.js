@@ -3,6 +3,7 @@
 // Author: Paul Kang
 // Email: paul.kang@ucaremedi.com, paul@paul-kang.com
 
+
 var version = "Charder 身高體重機 API V0.3";
 var customerName = process.env.NAME || "北榮新竹分院";
 var charderAPIKEY = "xG0y3ziAPN";
@@ -60,12 +61,18 @@ console.log("\n資料庫 config:");
 console.log(config);
 // 設定 mssql configuration 結束
 
+
+app.disable('x-powered-by'); // to pass ZAP active scan test
+
 // 設定 headers 和 post data 連結
 app.use(function (req, res, next) {
-  res.header('Access-Control-Allow-Origin', '*');
+  //res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader("Content-Security-Policy", "default-src 'self'; font-src 'self'; img-src 'self'; script-src 'self'; style-src 'self'; frame-src 'self'; frame-ancestors 'self'; form-action 'self'");
   if (req.method === 'OPTIONS') {
     var headers = {};
-    headers["Access-Control-Allow-Origin"] = "*";
+    //headers["Access-Control-Allow-Origin"] = "*";
     headers["Access-Control-Allow-Headers"] = "Origin, X-Requested-With, Content-Type, Accept";
     headers["Access-Control-Allow-Methods"] = "POST, GET, PUT, DELETE, OPTIONS";
     headers["Access-Control-Allow-Credentials"] = false;
@@ -85,6 +92,12 @@ app.use(function (req, res, next) {
 
 // API GET，並無實際作用，可用作 VM keep-alive 使用
 app.get('/', async function (req, res) {
+
+  //res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader["Content-Security-Policy"] = "default-src 'self'";
+
   //console.log(req.query);
   inputParam = req.query;
   var response = res; // use local variable 避免重入衝突
@@ -109,6 +122,71 @@ app.get('/', async function (req, res) {
       response.send("呼叫 未知API:" + inputParam.API);
   }
 });
+
+app.get('/robots.txt', async function (req, res) {
+
+  //res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader["Content-Security-Policy"] = "default-src 'self'";
+
+  //console.log(req.query);
+  inputParam = req.query;
+  var response = res; // use local variable 避免重入衝突
+
+  // 若無 API 參數，無效退出
+  if (typeof inputParam.API == "undefined") {
+    //console.log(req.headers);
+
+    console.log("Error: No API");
+    response.send("No API. 北榮新竹分院 API");
+    return 0;
+  }
+
+  switch (inputParam.API) {
+    // API 0x membership management
+    case "00":
+      console.log("呼叫 API:00 Keep Alive");
+      response.send(keepAlive());
+      break;
+    default:
+      console.log("呼叫 未知API:" + inputParam.API);
+      response.send("呼叫 未知API:" + inputParam.API);
+  }
+});
+
+app.get('/sitemap.xml', async function (req, res) {
+
+  //res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader["Content-Security-Policy"] = "default-src 'self'";
+
+  //console.log(req.query);
+  inputParam = req.query;
+  var response = res; // use local variable 避免重入衝突
+
+  // 若無 API 參數，無效退出
+  if (typeof inputParam.API == "undefined") {
+    //console.log(req.headers);
+
+    console.log("Error: No API");
+    response.send("No API. 北榮新竹分院 API");
+    return 0;
+  }
+
+  switch (inputParam.API) {
+    // API 0x membership management
+    case "00":
+      console.log("呼叫 API:00 Keep Alive");
+      response.send(keepAlive());
+      break;
+    default:
+      console.log("呼叫 未知API:" + inputParam.API);
+      response.send("呼叫 未知API:" + inputParam.API);
+  }
+});
+
 // API GET 結束
 
 // API POST for Charder Height/Weight/BMI(hwBMI) machine POST ?XAPIKEY=xG0y3ziAPN
@@ -119,6 +197,7 @@ app.post('/status', async function (req, res) {
   await postData(req, res);
 });
 // API POST 結束
+
 
 // API starts on port 
 app.listen(port, function () {
