@@ -1,10 +1,10 @@
 // API: 啟德身高體重計呼叫，直接寫入 MS SQL Database
-// Date: 2023/04/19
+// Date: 2023/04/24
 // Author: Paul Kang
 // Email: paul.kang@ucaremedi.com, paul@paul-kang.com
 
 
-var version = "Charder 身高體重機 API V0.3";
+var version = "Charder 身高體重機 API V0.5";
 var customerName = process.env.NAME || "北榮新竹分院";
 var charderAPIKEY = "xG0y3ziAPN";
 console.log("\n客戶名稱：", customerName, "，", version);

@@ -10,7 +10,7 @@ console.log(customerName);
 // express 宣告 =========================
 var https = require("https");
 var express = require('express');
-var request = require("request");
+//var request = require("request");
 var app = express();
 var port = process.env.PORT || 80; //給 身高體重計 呼叫
 // express 宣告結束 ======================
@@ -82,7 +82,7 @@ app.listen(port, function () {
 });
 
 // Program starts here
-var sleep = require('system-sleep')
+//var sleep = require('system-sleep')
 console.log("Version:", version);
 
 var inputParam;
