@@ -4,7 +4,7 @@
 // Email: paul.kang@ucaremedi.com, paul@paul-kang.com
 
 
-var version = "Charder 身高體重機 API V0.6";
+var version = "Charder 身高體重機 API V0.5";
 var customerName = process.env.NAME || "北榮新竹分院";
 var charderAPIKEY = "xG0y3ziAPN";
 console.log("\n客戶名稱：", customerName, "，", version);
@@ -23,8 +23,8 @@ Usage: node api2mssql.js
  --p: SQL Password
 `;
 
-// 檢查 command line arguments, --default 使用 預設參數 
-if ((args.s == undefined || args.d == undefined || args.u == undefined || args.p == undefined) && !args.default) {
+// 檢查 command line arguments, --test 使用 預設參數 
+if ((args.s == undefined || args.d == undefined || args.u == undefined || args.p == undefined) && !args.test) {
   console.log(instructions);
   return;
 }
@@ -32,12 +32,9 @@ if ((args.s == undefined || args.d == undefined || args.u == undefined || args.p
 var inputParam; // API 參數
 
 // SQL database settings
-// var sql_username = args.u || 'SA';
-// var sql_password = args.p || '<abc@12345678>';
-// var sql_server = args.s || 'localhost';
-var sql_username = args.u || 'goldfoun';
-var sql_password = args.p || 'goldfoun20230424';
-var sql_server = args.s || '192.168.76.12';
+var sql_username = args.u || 'SA';
+var sql_password = args.p || '<abc@12345678>';
+var sql_server = args.s || 'localhost';
 var sql_database = args.d || 'VitalSign';
 // End of SQL database settings
 
@@ -55,11 +52,8 @@ const config = {
   server: sql_server,
   database: sql_database,
   options: {
-    encrypt: false,
+    encrypt: true,
     trustServerCertificate: true,
-    cryptoCredentialsDetails: {
-      minVersion: 'TLSv1'
-    }
   },
 };
 
@@ -402,3 +396,5 @@ function log_event(message) {
   fs.closeSync(fs.openSync(logfile_name, 'a'));
 
 }
+
+
