@@ -3,10 +3,8 @@
 // Author: Paul Kang
 // Email: paul.kang@ucaremedi.com, paul@paul-kang.com
 
-// V0.7 Changes
-// 1. log files changed to logs/ directory
-// 2. add new parameters --t for SQL Table name, VitalSignM(住診), VitalSignOPD(門診), VitalSignER(急診)
-var version = "Charder 身高體重機 API V0.7";
+
+var version = "Charder 身高體重機 API V0.6";
 var customerName = process.env.NAME || "北榮新竹分院";
 var charderAPIKEY = "xG0y3ziAPN";
 console.log("\n客戶名稱：", customerName, "，", version);
@@ -21,7 +19,6 @@ Please secify the following parameters:
 Usage: node api2mssql.js
  --s: SQL Server
  --d: SQL Database
- --t: SQL Table
  --u: SQL Username
  --p: SQL Password
 `;
@@ -42,7 +39,6 @@ var sql_username = args.u || 'goldfoun';
 var sql_password = args.p || 'goldfoun20230424';
 var sql_server = args.s || '192.168.76.12';
 var sql_database = args.d || 'VitalSign';
-var sql_table = args.t || 'VitalSignM'; // 預設為門診
 // End of SQL database settings
 
 // express 宣告 
@@ -374,7 +370,7 @@ async function insert_rec_to_sql(medId, userId, takeTime, takeType, takeValue, d
 function log_info(message) {
   console.log("log_info message:" + message);
 
-  var logfile_name = "logs/log_information.txt";
+  var logfile_name = "log_information.txt";
   // Check if the file exists
   if (!fs.existsSync(logfile_name)) {
     // Create the file if it doesn't exist
@@ -392,7 +388,7 @@ function log_info(message) {
 function log_event(message) {
   console.log("log_event message:" + message);
 
-  var logfile_name = "logs/log_" + new Date().toISOString().substr(0, 10) + ".txt";
+  var logfile_name = "log_" + new Date().toISOString().substr(0, 10) + ".txt";
   // Check if the file exists
   if (!fs.existsSync(logfile_name)) {
     // Create the file if it doesn't exist
