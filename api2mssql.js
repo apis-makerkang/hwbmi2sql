@@ -19,9 +19,9 @@ const instructions = `
 Please secify the following parameters:
 
 Usage: node api2mssql.js
- --s: SQL Server
- --d: SQL Database
- --t: SQL Table
+ --s: SQL Server, default: 192.168.76.12
+ --d: SQL Database, default: VitalSign
+ --t: SQL Table, use VitalSignM(default), VitalSignOPD, VitalSignER)
  --u: SQL Username
  --p: SQL Password
 `;
@@ -31,6 +31,7 @@ if ((args.s == undefined || args.d == undefined || args.u == undefined || args.p
   console.log(instructions);
   return;
 }
+
 
 var inputParam; // API 參數
 
@@ -44,6 +45,19 @@ var sql_server = args.s || '192.168.76.12';
 var sql_database = args.d || 'VitalSign';
 var sql_table = args.t || 'VitalSignM'; // 預設為門診
 // End of SQL database settings
+
+if ((sql_table != 'VitalSignM') && (sql_table != 'VitalSignOPD') && (sql_table != 'VitalSignER')) {
+  console.log("\n錯誤請用 --t 指定 VitalSignM, VitalSignOPD, VitalSignER 之ㄧ");
+  return;
+} else {
+  console.log("\n使用 ", sql_table, " 表格.");
+}
+
+//test
+var medId = "1111"; var userId = "2222"; var takeTime = "3333"; var takeType = "4444"; var takeValue = "5555"; var memo = "6666"; var dataUnit = "7777";
+const test_command = `INSERT INTO ${sql_table} (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
+console.log("\nTest CMD:", test_command);
+// end of test
 
 // express 宣告 
 var express = require('express');
@@ -358,7 +372,8 @@ async function insert_rec_to_sql(medId, userId, takeTime, takeType, takeValue, d
   var memo = "NULL";
   try {
     await sql.connect(config);
-    const sql_command = `INSERT INTO VitalSignM (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
+    //const sql_command = `INSERT INTO VitalSignM (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
+    const sql_command = `INSERT INTO ${sql_table} (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
     //console.log(sql_command);
     const result = await sql.query(sql_command);
     //console.log("sql result", result);
