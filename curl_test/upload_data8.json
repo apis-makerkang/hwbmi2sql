@@ -1,0 +1,18 @@
+{
+  "title":"measure",
+  "model":"DP4800",
+  "sn":"1234567890",
+  "total":"1",
+  "packet":[
+    {
+      "index":"1",
+      "id":"12345678",
+      "nid":"12345",
+      "tare_weight":"5.0kg",
+      "net_weight":"63.2kg",
+      "height":"175.1cm",
+      "bmi":"20.6",
+      "time":"2023-06-19 13:26:50"
+    }
+  ]
+}

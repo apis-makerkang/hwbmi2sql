@@ -6,7 +6,10 @@
 // V0.7 Changes
 // 1. log files changed to logs/ directory
 // 2. add new parameters --t for SQL Table name, VitalSignM(住診), VitalSignOPD(門診), VitalSignER(急診)
-var version = "Charder 身高體重機 API V0.7";
+
+// v0.8 Changes
+// postData: MedNo 從只能是 8 位，改為可以是 8 位 和 10 位
+var version = "Charder 身高體重機 API V0.8";
 var customerName = process.env.NAME || "北榮新竹分院";
 var charderAPIKEY = "xG0y3ziAPN";
 console.log("\n客戶名稱：", customerName, "，", version);
@@ -308,7 +311,8 @@ async function postData(req, response) {
 
       var errCode = 0;
       // id 對應北榮新竹分院的 MedNo，一般是 8 碼，但在護家(7,8,9,10,11 村)會用 10碼身分證號，先不轉換，使用 8碼
-      if (record.id.length != 8) errCode += 1; //hex 01 "id 長度錯誤";   
+      // v0.7 if (record.id.length != 8) errCode += 1; //hex 01 "id 長度錯誤";   
+      if (!((record.id.length == 8) || (record.id.length == 10))) errCode += 1; //hex 01 "id 長度錯誤"; //v0.8   
 
       // nid 對應北榮新竹分院的 UserNo，一般是 5 碼，若 12 碼 NN0457000002 則轉成 ５碼 N0457
       if (record.nid.length == 12) {
