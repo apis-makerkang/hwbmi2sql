@@ -15,7 +15,7 @@
 // 2. 若是寫入 VitalSignOPD(門診), UseNo 固定為 "VSOPD" 
 // 3. 增加 -n 參數，寫入 table 的 AllowSync 為 'N'
 
-var version = "Charder 身高體重機 API V0.8";
+var version = "Charder 身高體重機 API V0.9";
 var customerName = process.env.NAME || "北榮新竹分院";
 var charderAPIKEY = "xG0y3ziAPN";
 console.log("\n客戶名稱：", customerName, "，", version);
