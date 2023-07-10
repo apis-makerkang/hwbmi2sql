@@ -1,0 +1,26 @@
+{
+  "name": "mssql_nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "api2mssql.js",
+  "scripts": {
+    "build": "pkg api2sql.js -t node16-macos-x64 -c package.json"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "pkg": {
+    "assets": [
+      "node_modules/**/*"
+    ]
+  },
+  "dependencies": {
+    "async": "^3.2.4",
+    "express": "^4.18.2",
+    "helmet": "^6.1.5",
+    "mssql": "^9.1.1",
+    "pkg": "^5.8.1",
+    "update": "^0.7.4",
+    "yargs": "^17.7.1"
+  }
+}
