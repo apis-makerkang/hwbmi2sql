@@ -1,5 +1,5 @@
 // API: 啟德身高體重計呼叫，直接寫入 MS SQL Database
-// Date: 2023/04/24
+// Date: 2023/07/10
 // Author: Paul Kang
 // Email: paul.kang@ucaremedi.com, paul@paul-kang.com
 
@@ -9,6 +9,12 @@
 
 // v0.8 Changes
 // postData: MedNo 從只能是 8 位，改為可以是 8 位 和 10 位
+
+// v0.9 Changes
+// 1. VitalSignOPD(門診) 的 MedNo 欄名改為 IdNo 
+// 2. 若是寫入 VitalSignOPD(門診), UseNo 固定為 "VSOPD" 
+// 3. 增加 -n 參數，寫入 table 的 AllowSync 為 'N'
+
 var version = "Charder 身高體重機 API V0.8";
 var customerName = process.env.NAME || "北榮新竹分院";
 var charderAPIKEY = "xG0y3ziAPN";
@@ -24,9 +30,10 @@ Please secify the following parameters:
 Usage: node api2mssql.js
  --s: SQL Server, default: 192.168.76.12
  --d: SQL Database, default: VitalSign
- --t: SQL Table, use VitalSignM(default), VitalSignOPD, VitalSignER)
+ --t: SQL Table, use VitalSignM(default), VitalSignOPD, VitalSignER
  --u: SQL Username
  --p: SQL Password
+ --n: 'Y' or 'N', Allow Sync, for test only
 `;
 
 // 檢查 command line arguments, --default 使用 預設參數 
@@ -47,6 +54,7 @@ var sql_password = args.p || 'goldfoun20230424';
 var sql_server = args.s || '192.168.76.12';
 var sql_database = args.d || 'VitalSign';
 var sql_table = args.t || 'VitalSignM'; // 預設為門診
+var allow_sync = args.n || 'Y'; // 預設為 Alow Sync 'Y', 當 args.n == 'N', 不允許同步
 // End of SQL database settings
 
 if ((sql_table != 'VitalSignM') && (sql_table != 'VitalSignOPD') && (sql_table != 'VitalSignER')) {
@@ -58,7 +66,7 @@ if ((sql_table != 'VitalSignM') && (sql_table != 'VitalSignOPD') && (sql_table !
 
 //test
 var medId = "1111"; var userId = "2222"; var takeTime = "3333"; var takeType = "4444"; var takeValue = "5555"; var memo = "6666"; var dataUnit = "7777";
-const test_command = `INSERT INTO ${sql_table} (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
+const test_command = `INSERT INTO ${sql_table} (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', '${allow_sync}', 'N', NULL)`;
 console.log("\nTest CMD:", test_command);
 // end of test
 
@@ -376,8 +384,17 @@ async function insert_rec_to_sql(medId, userId, takeTime, takeType, takeValue, d
   var memo = "NULL";
   try {
     await sql.connect(config);
+
     //const sql_command = `INSERT INTO VitalSignM (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
-    const sql_command = `INSERT INTO ${sql_table} (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', 'Y', 'N', NULL)`;
+    // chnages #1 and #2 for V0.9
+    var sql_command = `INSERT INTO ${sql_table} (MedNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', '${allow_sync}', 'N', NULL)`;
+    if (sql_table == "VitalSignOPD") {
+      userId = "VSOPD"; // 門診固定為 VSOPD
+      sql_command = `INSERT INTO ${sql_table} (IdNo, UserNo, TakeTime, TakeType, TakeValue, Memo, DataUnit, AllowSync, SyncStatus, SyncTime) VALUES ('${medId}', '${userId}', '${takeTime}', '${takeType}', '${takeValue}', '${memo}', '${dataUnit}', '${allow_sync}', 'N', NULL)`;
+    }
+    console.log("***Write SQL command: " + sql_command);
+    // end of chnages #1 and #2 for V0.9
+
     //console.log(sql_command);
     const result = await sql.query(sql_command);
     //console.log("sql result", result);
